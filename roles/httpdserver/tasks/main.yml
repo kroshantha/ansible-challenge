@@ -1,0 +1,21 @@
+---
+# tasks file for httpdserver
+- name: Install web server
+  ansible.builtin.yum:
+    name: "httpd"
+    state: present
+  become: true
+
+- name: Recursively change ownership of a directory
+  ansible.builtin.file:
+    path: /var/www
+    state: directory
+    recurse: yes
+    mode: '0777'
+  become: true
+
+- name: "Start httpd services"
+  service:
+      name: httpd
+      state: started
+  become: true

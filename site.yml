@@ -1,1 +1,94 @@
 ---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    key_name: mykey_test
+    region: us-east-1
+    image: ami-06ca3ca175f37dd66
+    id: web-app-2
+    sec_group: '{{ id }}-sec'
+  tasks:
+    - name: Facts
+      block:
+        - name: Get instances facts
+          amazon.aws.ec2_instance_info:
+            aws_access_key: '{{ ec2_access_key }}'
+            aws_secret_key: '{{ ec2_secret_key }}'
+            region: '{{ region }}'
+          register: results
+        - name: Instances ID
+          ansible.legacy.debug:
+            msg: >-
+              ID: {{ item.instance_id }} - State: {{ item.state.name }} - Public
+              DNS: {{ item.public_dns_name }}
+          loop: '{{ results.instances }}'
+      tags: always
+    - name: Provisioning EC2 instances
+      block:
+        - name: create a new ec2 key pair, returns generated private key
+          ec2_key:
+            aws_access_key: '{{ ec2_access_key }}'
+            aws_secret_key: '{{ ec2_secret_key }}'
+            region: '{{ region }}'
+            name: '{{ key_name }}'
+          register: ec2_key_result
+
+        - name: Save private key
+          copy: content="{{ ec2_key_result.key.private_key }}" dest="$PWD/inventory/{{ key_name }}.pem" mode=0600
+          when: ec2_key_result.changed
+
+        - name: Create security group
+          amazon.aws.ec2_security_group:
+            name: '{{ sec_group }}'
+            description: 'Sec group for app {{ id }}'
+            region: '{{ region }}'
+            aws_access_key: '{{ ec2_access_key }}'
+            aws_secret_key: '{{ ec2_secret_key }}'
+            rules:
+              - proto: tcp
+                ports:
+                  - 22
+                  - 80 
+                cidr_ip: 0.0.0.0/0
+                rule_desc: allow all on ssh/http port
+          register: result_sec_group
+        - name: Print return information from the previous task
+          ansible.builtin.debug:
+            var: result_sec_group
+            verbosity: 2
+        - name: Provision instance(s)
+          amazon.aws.ec2_instance:
+            aws_access_key: '{{ ec2_access_key }}'
+            aws_secret_key: '{{ ec2_secret_key }}'
+            key_name: '{{ key_name }}'
+            name: '{{ id }}'
+            security_group: '{{ result_sec_group.group_id}}'
+            image_id: '{{ image }}'
+            instance_type: t2.micro
+            region: '{{ region }}'
+            wait: true
+            count: 2
+          register: ec2
+        - name: Print return information from the previous task
+          ansible.builtin.debug:
+            var: ec2
+            verbosity: 2
+        - name: "Add new Instance to Host group"
+          add_host:
+            hostname: "{{ item.public_ip_address }}"
+            groupname: webserver1
+          loop: "{{ ec2.instances }}"
+
+        - name: "Wait for SSH in Instance"
+          wait_for:
+            host: "{{ item.public_dns_name }}"
+            port: 22
+            state: started
+          loop: "{{ ec2.instances }}"
+- hosts: webserver1
+  gather_facts: yes
+  roles:
+    - httpdserver
+    - chrony
+    - game

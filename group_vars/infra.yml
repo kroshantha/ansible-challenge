@@ -1,1 +1,6 @@
----
+#---
+#key_name: my_aws
+#region: us-east-1
+#image: ami-06ca3ca175f37dd66 # updated with my Ansible image (orginal -code-->)https://cloud-images.ubuntu.com/locator/ec2/
+#id: "web-app"
+#sec_group: "{{ id }}-sec"

@@ -1,0 +1,12 @@
+---
+# tasks file for game
+- name: "Snake Game"
+  get_url:
+    url: https://github.com/Metroxe/one-html-page-challenge/blob/master/entries/Snakegame.html
+    dest: "/var/www/html/Snakegame.html"
+
+- name: "Start httpd services"
+  service:
+      name: httpd
+      state: started
+  become: true

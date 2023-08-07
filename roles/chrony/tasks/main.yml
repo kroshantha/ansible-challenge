@@ -1,0 +1,23 @@
+---
+- name: make sure chronyd is installed
+  yum:
+    name: chrony
+    state: latest
+    update_cache: yes
+  become: true
+
+- name: deploy chrony.conf template
+  template:
+    src: roles/chrony/templates/chrony.conf.j2
+    dest: /etc/chrony.conf
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  become: true
+
+- name: Restart chronyd
+  service:
+    name: chronyd
+    state: restarted
+  become: true
