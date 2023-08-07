@@ -77,7 +77,7 @@
         - name: "Add new Instance to Host group"
           add_host:
             hostname: "{{ item.public_ip_address }}"
-            groupname: webserver1
+            groupname: webserver
           loop: "{{ ec2.instances }}"
 
         - name: "Wait for SSH in Instance"
@@ -86,7 +86,7 @@
             port: 22
             state: started
           loop: "{{ ec2.instances }}"
-- hosts: webserver1
+- hosts: webserver
   gather_facts: yes
   roles:
     - httpdserver
