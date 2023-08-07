@@ -5,3 +5,4 @@ Pre-requsites:
 	- boto boto3 ansible
 
 Note: Vault password will share with Nick Email.
+With Vault : ansible-playbook -i inventory/myhosts.txt site.yml  --ask-vault-pass
