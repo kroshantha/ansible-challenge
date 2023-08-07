@@ -1,1 +1,7 @@
-Pre-requsites
+Pre-requsites:
+	- EC2 instance
+	- Python 3
+	- pip3
+	- boto boto3 ansible
+
+Note: Vault password will share with Nick Email.
